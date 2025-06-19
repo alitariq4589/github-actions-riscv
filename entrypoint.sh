@@ -9,7 +9,7 @@ if [[ ! -f ".runner" ]]; then
   fi
 
   ./config.sh \
-    --url "https://github.com/${GITHUB_REPO}" \
+    --url "${GITHUB_REPO}" \
     --token "${RUNNER_TOKEN}" \
     --unattended \
     --replace
