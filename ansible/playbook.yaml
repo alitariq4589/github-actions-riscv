@@ -1,0 +1,123 @@
+---
+- name: Setup board
+  hosts: RV_BOARD_1 # Add IP and port inside inventory.ini
+
+  # Add necessary packages with following task
+  tasks:
+    - name: Install packages
+      apt:
+        pkg:
+          - podman
+          - docker.io
+        update_cache: yes
+      async: 1200
+      poll: 5
+    
+    - name: Add subuid line if missing
+      ansible.builtin.lineinfile:
+        path: /etc/subuid
+        line: "github-runner-user:262144:65536"
+        create: yes
+        state: present
+        regexp: "^github-runner-user:.*"
+      register: subuid_result
+
+    - name: Add subgid line if missing
+      ansible.builtin.lineinfile:
+        path: /etc/subgid
+        line: "github-runner-user:262144:65536"
+        create: yes
+        state: present
+        regexp: "^github-runner-user:.*"
+      register: subgid_result
+
+    - name: Run podman system migrate if subuid/subgid was changed
+      ansible.builtin.command: podman system migrate
+      become: true
+      become_user: github-runner-user
+      when: subuid_result.changed or subgid_result.changed
+
+    - name: Add user lingering
+      shell: |
+        loginctl enable-linger $(whoami)
+      become: yes
+      become_user: github-runner-user
+
+
+    - name: Create a temporary directory in /home/github-runner-user
+      file:
+        path: "/home/github-runner-user/dockerbuild_{{ ansible_date_time.epoch }}"
+        state: directory
+        # mode: '0755'
+      register: temp_dir
+      become: yes
+      become_user: github-runner-user
+
+
+    
+    - name: Write Dockerfile to temporary directory
+      copy:
+        dest: "{{ temp_dir.path }}/Dockerfile"
+        content: |
+          FROM docker.io/riscv64/debian:trixie
+          RUN apt-get update && apt-get install -y curl git ca-certificates libicu-dev sudo
+          WORKDIR /home/runner
+
+          # Download GitHub runner (replace URL with the latest for your architecture)
+          RUN curl -O -L https://github.com/dkurt/github_actions_riscv/releases/download/v2.321.0/actions-runner-linux-riscv64-2.321.0.tar.gz && \
+              tar xzf actions-runner-linux-riscv64-2.321.0.tar.gz && rm actions-runner-linux-riscv64-2.321.0.tar.gz
+
+          # Install dependencies for the runner (if any)
+          RUN bash ./bin/installdependencies.sh
+
+          # Install .NET SDK for RISC-V
+          RUN curl -LO https://github.com/dkurt/dotnet_riscv/releases/download/v9.0.100/dotnet-sdk-9.0.100-linux-riscv64-gcc-ubuntu-24.04.tar.gz && \
+              mkdir -p /opt/dotnet && \
+              tar -xzf dotnet-sdk-9.0.100-linux-riscv64-gcc-ubuntu-24.04.tar.gz -C /opt/dotnet && \
+              rm dotnet-sdk-9.0.100-linux-riscv64-gcc-ubuntu-24.04.tar.gz && \
+              ln -s /opt/dotnet/dotnet /usr/local/bin/dotnet
+
+          # Copy entrypoint script
+          COPY entrypoint.sh .
+          RUN chmod +x entrypoint.sh
+
+          # Add a user which will run the github actions
+          RUN useradd -m runneruser
+          RUN chown -R runneruser:runneruser /home/runner
+
+          # Add runneruser to sudoers without password prompt
+          RUN echo "runneruser ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/runneruser
+          USER runneruser
+
+          ENTRYPOINT ["./entrypoint.sh"]
+      become: yes
+      become_user: github-runner-user
+
+
+    - name: entrypoint.sh to temporary directory
+      copy:
+        dest: "{{ temp_dir.path }}/entrypoint.sh"
+        content: |
+          #!/bin/bash
+          set -e
+          if [[ ! -f ".runner" ]]; then
+            if [[ -z "$GITHUB_REPO" || -z "$RUNNER_TOKEN" ]]; then
+              echo "Missing GITHUB_REPO or RUNNER_TOKEN"
+              exit 1
+            fi
+            ./config.sh \
+              --url "${GITHUB_REPO}" \
+              --token "${RUNNER_TOKEN}" \
+              --unattended \
+              --replace
+            fi
+
+            ./run.sh
+      become: yes
+      become_user: github-runner-user
+
+    - name: Build Podman image
+      shell: |
+        podman build -t github-action {{ temp_dir.path }}
+      become: yes
+      become_user: github-runner-user
