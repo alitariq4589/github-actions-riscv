@@ -2,7 +2,7 @@
 
 This repository sets up github actions inside a podman container on a RISC-V machine. The setup is tested on Milk-V Pioneer Box.
 
-It uses https://github.com/dkurt/github_actions_riscv as the GitHub actions for RISC-V (for now).
+It uses https://github.com/dkurt/github_actions_riscv as the GitHub actions for RISC-V *(for now)*.
 
 Running the [setup.sh](/setup.sh) on the RISC-V machine with sudo privileges will automatically build the github actions on the machine.
 
