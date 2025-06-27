@@ -67,10 +67,7 @@ jobs:
         export DOTNET_ROOT=/opt/dotnet
         export DOTNET_MULTILEVEL_LOOKUP=0
 
-        ./build.sh --pack --ci -c Release --warnAsError false \
-          /p:Architecture=riscv64 \
-          /p:PublicBaseURL=file://${DOWNLOADDIR}/ \
-          /p:DotNetBuildFromSource=true
+        ./build.sh --pack --ci -c Release --warnAsError false /p:Architecture=riscv64 /p:Version=${SDK_VERSION} /p:PublicBaseURL=file://${DOWNLOADDIR}/
 
         # Copy final SDK output
         cp artifacts/packages/Release/Shipping/dotnet-sdk-*-linux-riscv64.tar.gz ${OUTPUTDIR}
