@@ -13,7 +13,11 @@ on:
 jobs:
   build-sdk:
     runs-on: self-hosted
-
+    env:
+      DEBIAN_FRONTEND: noninteractive
+      PACKAGESDIR: ${{ github.workspace }}/packages
+      DOWNLOADDIR: ${{ github.workspace }}/downloads
+      OUTPUTDIR: ${{ github.workspace }}/output
     steps:
     - name: Install dependencies
       run: |
