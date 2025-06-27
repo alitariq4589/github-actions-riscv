@@ -18,6 +18,8 @@ jobs:
       PACKAGESDIR: ${{ github.workspace }}/packages
       DOWNLOADDIR: ${{ github.workspace }}/downloads
       OUTPUTDIR: ${{ github.workspace }}/output
+      DOTNET_ROOT: /opt/dotnet
+      PATH: /opt/dotnet:$PATH
     steps:
     - name: Install dependencies
       run: |
@@ -28,6 +30,17 @@ jobs:
           libssl-dev libkrb5-dev pkg-config zlib1g-dev \
           llvm lttng-tools liblttng-ust-dev libelf-dev \
           libunwind-dev gettext ca-certificates gnupg
+    
+    - name: Get Bootstrap sdk
+      run: |
+        if [ ! -f /opt/dotnet/dotnet ]; then
+          wget https://github.com/dkurt/dotnet_riscv/releases/download/v9.0.100/dotnet-sdk-9.0.100-linux-riscv64-gcc-ubuntu-22.04.tar.gz
+          echo "Extracting SDK..."
+          sudo mkdir -p /opt/dotnet
+          sudo tar -xf dotnet-sdk-9.0.100-linux-riscv64-gcc-ubuntu-22.04.tar.gz -C /opt/dotnet
+        else
+          echo "SDK already exists at /opt/dotnet"
+        fi
 
     - name: Clone .NET SDK (main branch)
       run: |
