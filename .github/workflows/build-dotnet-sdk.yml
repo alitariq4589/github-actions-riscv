@@ -31,6 +31,7 @@ jobs:
 
     - name: Clone .NET SDK (main branch)
       run: |
+        rm -rf sdk # In case sdk is already cloned
         git clone --depth 1 https://github.com/dotnet/sdk
 
     - name: Prepare build directories
