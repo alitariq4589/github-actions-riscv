@@ -19,6 +19,7 @@ jobs:
       DOWNLOADDIR: ${{ github.workspace }}/downloads
       OUTPUTDIR: ${{ github.workspace }}/output
       DOTNET_ROOT: /opt/dotnet
+      SDK_VERSION: 9.0.100
 
     steps:
     - name: Install dependencies
