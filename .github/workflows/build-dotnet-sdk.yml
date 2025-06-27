@@ -64,7 +64,9 @@ jobs:
 
         ./build.sh --pack --ci -c Release --warnAsError false \
           /p:Architecture=riscv64 \
-          /p:PublicBaseURL=file://${DOWNLOADDIR}/
+          /p:PublicBaseURL=file://${DOWNLOADDIR}/ \
+          /p:DotNetBuildFromSource=true \
+          /p:DOTNET_SDK_VERSION=9.0.100
 
         # Copy final SDK output
         cp artifacts/packages/Release/Shipping/dotnet-sdk-*-linux-riscv64.tar.gz ${OUTPUTDIR}
