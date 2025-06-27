@@ -1,0 +1,70 @@
+name: Build .NET SDK for RISC-V (latest, native)
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 0 * * 0'  # Every Sunday at 00:00 UTC
+  push:
+    tags:
+      - "*"
+
+jobs:
+  build-sdk:
+    runs-on: self-hosted
+    container:
+      image: riscv64/debian:trixie
+      env:
+        DEBIAN_FRONTEND: noninteractive
+        PACKAGESDIR: ${{ github.workspace }}/packages
+        DOWNLOADDIR: ${{ github.workspace }}/downloads
+        OUTPUTDIR: ${{ github.workspace }}/output
+      volumes:
+        - ${{ github.workspace }}:${{ github.workspace }}
+      options: --privileged
+
+    steps:
+    - name: Install dependencies
+      run: |
+        apt-get update
+        apt-get install -y \
+          git curl wget unzip tar \
+          build-essential clang cmake python3 nodejs npm \
+          libssl-dev libkrb5-dev pkg-config zlib1g-dev \
+          lldb lttng-tools liblttng-ust-dev libelf-dev \
+          libunwind-dev gettext ca-certificates gnupg
+
+    - name: Clone .NET SDK (main branch)
+      run: |
+        git clone --depth 1 https://github.com/dotnet/sdk
+
+    - name: Prepare build directories
+      run: |
+        mkdir -p ${PACKAGESDIR} ${DOWNLOADDIR} ${OUTPUTDIR}
+
+    - name: Patch and build SDK
+      run: |
+        cd sdk
+
+        # Patch build scripts to recognize riscv64 - thanks to dkurt
+        sed -i 's|linux-arm64|linux-riscv64|g' src/Installer/redist-installer/targets/GenerateBundledVersions.targets || true
+        sed -i 's|linux-arm64|linux-riscv64|g' src/SourceBuild/content/eng/bootstrap/buildBootstrapPreviouslySB.csproj || true
+        sed -i 's|ppc64le|riscv64|g' Directory.Build.props || true
+        sed -i 's|ppc64le|riscv64|g' src/SourceBuild/content/Directory.Build.props || true
+        sed -i 's|ppc64le|riscv64|g' src/Installer/redist-installer/targets/Crossgen.targets || true
+        sed -i "s|<clear />|<clear />\\n<add key='local' value='${PACKAGESDIR}' />|" NuGet.config || true
+
+        ./build.sh --pack --ci -c Release --warnAsError false \
+          /p:Architecture=riscv64 \
+          /p:PublicBaseURL=file://${DOWNLOADDIR}/
+
+        # Copy final SDK output
+        cp artifacts/packages/Release/Shipping/dotnet-sdk-*-linux-riscv64.tar.gz ${OUTPUTDIR}
+        cp artifacts/packages/Release/Shipping/dotnet-sdk-*-linux-riscv64.tar.gz.sha512 ${OUTPUTDIR}
+
+    - name: Upload to GitHub Release
+      if: startsWith(github.ref, 'refs/tags/')
+      uses: softprops/action-gh-release@v2
+      with:
+        files: |
+          ${{ github.workspace }}/output/dotnet-sdk-*-linux-riscv64.tar.gz
+          ${{ github.workspace }}/output/dotnet-sdk-*-linux-riscv64.tar.gz.sha512
