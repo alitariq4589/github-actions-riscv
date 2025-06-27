@@ -19,7 +19,6 @@ jobs:
       DOWNLOADDIR: ${{ github.workspace }}/downloads
       OUTPUTDIR: ${{ github.workspace }}/output
       DOTNET_ROOT: /opt/dotnet
-      PATH: /opt/dotnet:$PATH
 
     steps:
     - name: Install dependencies
@@ -43,6 +42,8 @@ jobs:
         else
           echo "SDK already exists at /opt/dotnet"
         fi
+    - name: Add dotnet to PATH
+      run: echo "/opt/dotnet" >> $GITHUB_PATH
 
     - name: Clone .NET SDK (main branch)
       run: |
