@@ -22,7 +22,7 @@ jobs:
           git curl wget unzip tar \
           build-essential clang cmake python3 nodejs npm \
           libssl-dev libkrb5-dev pkg-config zlib1g-dev \
-          lldb lttng-tools liblttng-ust-dev libelf-dev \
+          llvm lttng-tools liblttng-ust-dev libelf-dev \
           libunwind-dev gettext ca-certificates gnupg
 
     - name: Clone .NET SDK (main branch)
