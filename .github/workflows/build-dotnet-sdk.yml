@@ -43,11 +43,7 @@ jobs:
         cd sdk
 
         # Patch build scripts to recognize riscv64 - thanks to dkurt
-        sed -i 's|linux-arm64|linux-riscv64|g' src/Installer/redist-installer/targets/GenerateBundledVersions.targets || true
-        sed -i 's|linux-arm64|linux-riscv64|g' src/SourceBuild/content/eng/bootstrap/buildBootstrapPreviouslySB.csproj || true
         sed -i 's|ppc64le|riscv64|g' Directory.Build.props || true
-        sed -i 's|ppc64le|riscv64|g' src/SourceBuild/content/Directory.Build.props || true
-        sed -i 's|ppc64le|riscv64|g' src/Installer/redist-installer/targets/Crossgen.targets || true
         sed -i "s|<clear />|<clear />\\n<add key='local' value='${PACKAGESDIR}' />|" NuGet.config || true
 
         ./build.sh --pack --ci -c Release --warnAsError false \
