@@ -61,12 +61,16 @@ jobs:
         # Patch build scripts to recognize riscv64 - thanks to dkurt
         sed -i 's|ppc64le|riscv64|g' Directory.Build.props || true
         sed -i "s|<clear />|<clear />\\n<add key='local' value='${PACKAGESDIR}' />|" NuGet.config || true
+        export DOTNET_SKIP_FIRST_TIME_EXPERIENCE=1
+        export DOTNET_INSTALL_DIR=/opt/dotnet
+        export PATH="/opt/dotnet:$PATH"
+        export DOTNET_ROOT=/opt/dotnet
+        export DOTNET_MULTILEVEL_LOOKUP=0
 
         ./build.sh --pack --ci -c Release --warnAsError false \
           /p:Architecture=riscv64 \
           /p:PublicBaseURL=file://${DOWNLOADDIR}/ \
-          /p:DotNetBuildFromSource=true \
-          /p:DOTNET_SDK_VERSION=9.0.100
+          /p:DotNetBuildFromSource=true
 
         # Copy final SDK output
         cp artifacts/packages/Release/Shipping/dotnet-sdk-*-linux-riscv64.tar.gz ${OUTPUTDIR}
