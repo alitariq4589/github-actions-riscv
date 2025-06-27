@@ -11,16 +11,6 @@ on:
 jobs:
   build-sdk:
     runs-on: self-hosted
-    container:
-      image: riscv64/debian:trixie
-      env:
-        DEBIAN_FRONTEND: noninteractive
-        PACKAGESDIR: ${{ github.workspace }}/packages
-        DOWNLOADDIR: ${{ github.workspace }}/downloads
-        OUTPUTDIR: ${{ github.workspace }}/output
-      volumes:
-        - ${{ github.workspace }}:${{ github.workspace }}
-      options: --privileged
 
     steps:
     - name: Install dependencies
