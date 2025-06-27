@@ -1,6 +1,6 @@
 FROM docker.io/riscv64/debian:trixie
 
-RUN apt-get update && apt-get install -y curl git ca-certificates libicu-dev sudo
+RUN apt-get update && apt-get install -y docker.io curl git ca-certificates libicu-dev sudo
 
 
 WORKDIR /home/runner
