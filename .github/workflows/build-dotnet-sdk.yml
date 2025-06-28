@@ -22,6 +22,23 @@ jobs:
         - ${{ github.workspace }}:${{ github.workspace }}
 
     steps:
+    # Step to add the Kitware APT GPG key
+    - name: Add Kitware GPG Key
+      run: |
+        # Install gnupg and curl if not already present in the container
+        apt-get update
+        apt-get install -y gnupg curl
+        # Download the Kitware signing key and add it to the apt keyrings
+        # This method uses gpg --dearmor and places the key in /usr/share/keyrings,
+        # which is the recommended approach for Ubuntu 22.04+
+        curl -fsSL https://apt.kitware.com/keys/kitware-archive-latest.asc | gpg --dearmor -o /usr/share/keyrings/kitware-archive-keyring.gpg
+        # Ensure the sources.list entry for Kitware uses 'signed-by'
+        # This part might already be correctly configured in the base image,
+        # but explicitly ensuring it won't hurt.
+        # If the kitware.list file does not exist, this will create it.
+        # If it exists, it will append, so ensure there are no duplicate entries.
+        echo "deb [signed-by=/usr/share/keyrings/kitware-archive-keyring.gpg] https://apt.kitware.com/ubuntu/ jammy main" | tee /etc/apt/sources.list.d/kitware.list
+
     - name: Clone repositories (main branches for latest development)
       run: |
         rm -rf runtime aspnetcore sdk
@@ -32,7 +49,7 @@ jobs:
 
     - name: Update Node.js
       run: |
-        apt-get update
+        # apt-get update is now done in the 'Add Kitware GPG Key' step
         apt-get autoremove -y nodejs
         curl -fsSL https://deb.nodesource.com/setup_18.x | bash - && apt-get install -y nodejs
 
