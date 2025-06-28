@@ -4,7 +4,7 @@ on: [workflow_dispatch, pull_request, push]
 
 jobs:
   run:
-    runs-on: self-hosted
+    runs-on: [self-hosted, x64] # Targeting the self-hosted runner explicitly labeled as 'x64'
     container:
       # This image is critical for cross-compilation.
       # Ensure it's compatible with building the latest .NET source.
