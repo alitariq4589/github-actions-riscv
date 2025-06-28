@@ -25,7 +25,7 @@ jobs:
     # Step to add the Kitware APT GPG key
     - name: Add Kitware GPG Key
       run: |
-        sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 6AF7F09730B3F0A4
+        apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 6AF7F09730B3F0A4
 
 
     - name: Clone repositories (main branches for latest development)
