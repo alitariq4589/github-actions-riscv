@@ -14,15 +14,6 @@ RUN curl -O -L https://github.com/dkurt/github_actions_riscv/releases/download/v
 # Install dependencies for the runner (if any)
 RUN bash ./bin/installdependencies.sh
 
-# Install .NET SDK for RISC-V
-RUN curl -LO https://github.com/dkurt/dotnet_riscv/releases/download/v9.0.100/dotnet-sdk-9.0.100-linux-riscv64-gcc-ubuntu-24.04.tar.gz && \
-    mkdir -p /opt/dotnet && \
-    tar -xzf dotnet-sdk-9.0.100-linux-riscv64-gcc-ubuntu-24.04.tar.gz -C /opt/dotnet && \
-    rm dotnet-sdk-9.0.100-linux-riscv64-gcc-ubuntu-24.04.tar.gz && \
-    ln -s /opt/dotnet/dotnet /usr/local/bin/dotnet
-
-
-
 
 # Copy entrypoint script
 COPY entrypoint.sh .

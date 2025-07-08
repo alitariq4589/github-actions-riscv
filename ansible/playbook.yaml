@@ -1,6 +1,6 @@
 ---
 - name: Setup board
-  hosts: RV_BOARD_1 # Add IP and port inside inventory.ini
+  hosts: sf2-3 # Add IP and port inside inventory.ini
 
   # Add necessary packages with following task
   tasks:
