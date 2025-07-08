@@ -1,4 +1,4 @@
-FROM docker.io/riscv64/debian:trixie
+FROM docker.io/riscv64/ubuntu:24.04
 
 RUN apt-get update && apt-get install -y docker.io curl git ca-certificates libicu-dev sudo
 
@@ -30,7 +30,6 @@ RUN echo "runneruser ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/runneruser
 
 USER runneruser
 
-RUN dotnet --info
 
 
 
