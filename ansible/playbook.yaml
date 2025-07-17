@@ -1,6 +1,6 @@
 ---
 - name: Setup board
-  hosts: sf2-4 # Add IP and port inside inventory.ini
+  hosts: pioneer-128G-1 # Add IP and port inside inventory.ini
 
   # Add necessary packages with following task
   tasks:
