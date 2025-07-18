@@ -101,14 +101,14 @@
         <ul class="list-disc list-inside space-y-2 text-lg">
           <li>
             For enhanced security, create a dedicated user on your RISC-V board
-            named <code class="font-mono bg-blue-800/50 text-blue-100 px-1 py-0.5 rounded shadow-inner">gitlab-runner-user</code>.
+            named <code class="font-mono bg-blue-800/50 text-blue-100 px-1 py-0.5 rounded shadow-inner">github-runner-user</code>.
             This user should <strong>not</strong> have <code class="font-mono bg-blue-800/50 text-blue-100 px-1 py-0.5 rounded shadow-inner">sudo</code>
-            (root) privileges. The GitLab Runner service and all its associated files will operate under this user.
+            (root) privileges. The GitHub Runner service and all its associated files will operate under this user.
           </li>
           <li>
             The host computer running this setup (where this Flask application is hosted) must be able to access the RISC-V board via SSH using a
             private key. Ensure this private key is configured for authentication with the
-            <code class="font-mono bg-blue-800/50 text-blue-100 px-1 py-0.5 rounded shadow-inner">gitlab-runner-user</code>
+            <code class="font-mono bg-blue-800/50 text-blue-100 px-1 py-0.5 rounded shadow-inner">github-runner-user</code>
             on the RISC-V board.
           </li>
         </ul>

@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>RISC-V GitLab Runner Registration</title>
+  <title>RISC-V GitHub Runner Registration</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
@@ -21,21 +21,21 @@
     <div class="bg-[#1e293b] rounded-3xl shadow-2xl max-w-3xl w-[95%] my-8">
       <section class="w-full py-7 rounded-t-2xl mb-8 shadow-lg bg-gradient-to-r from-blue-700 to-blue-500">
         <h1 class="text-center text-4xl font-extrabold tracking-tight">
-          RISC-V GitLab Runner Registration
+          RISC-V GitHub Runner Registration
         </h1>
       </section>
 
       <section class="w-full py-6 mb-6">
         <div class="flex justify-center">
-          <img src="{{ url_for('static', filename='gitlab-runner-riscv.drawio.png') }}"
-            class="rounded-lg shadow-md" alt="GitLab to RISC-V Runner Flow"
+          <img src="{{ url_for('static', filename='github-runner-riscv.drawio.png') }}"
+            class="rounded-lg shadow-md" alt="GitHub to RISC-V Runner Flow"
             style="max-width: 500px; height: auto;" />
         </div>
       </section>
 
       <section class="px-10">
         <form action="{{ url_for('handle_runner_registration_post') }}" method="post">
-          {% for field in ['user_email', 'gitlab_project_link', 'gitlab_server_url', 'runner_token'] %}
+          {% for field in ['user_email', 'github_project_link', 'github_server_url', 'runner_token'] %}
           <div class="mb-4 flex flex-col sm:flex-row items-center">
             <label for="{{ field }}"
               class="w-full sm:w-1/3 text-left sm:text-right pr-4 mb-2 sm:mb-0 text-blue-200 font-medium capitalize">
@@ -94,8 +94,8 @@
             </p>
             <p class="text-lg font-bold">
               GitHub Repository:
-              <a href="https://github.com/alitariq4589/riscv-gitlab-ci-infra"
-                class="text-blue-400 hover:underline">https://github.com/alitariq4589/riscv-gitlab-ci-infra</a>
+              <a href="https://github.com/alitariq4589/riscv-github-ci-infra"
+                class="text-blue-400 hover:underline">https://github.com/alitariq4589/riscv-github-ci-infra</a>
             </p>
             <p class="text-lg">We’ll get back to you as soon as possible!</p>
           </div>
