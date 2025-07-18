@@ -1,0 +1,119 @@
+  <!DOCTYPE html>
+  <html lang="en">
+  
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Add New RISC-V Board</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <style>
+      body {
+        font-family: 'Inter', sans-serif;
+        background-color: #0f172a;
+        color: #cbd5e1;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+        margin: 0;
+      }
+
+      .form-control {
+        display: block;
+        width: 100%;
+        padding: 0.5rem 1rem;
+        font-size: 1rem;
+        color: #e5e7eb;
+        background-color: #334155;
+        border: 1px solid #4b5563;
+        border-radius: 0.5rem;
+      }
+
+      .form-control::placeholder {
+        color: #9ca3af;
+      }
+
+      .form-control:focus {
+        outline: none;
+        border-color: #3b82f6;
+      }
+    </style>
+  </head>
+  
+  <body>
+    <div class="bg-[#1e293b] rounded-3xl shadow-2xl max-w-xl w-[95%]">
+      <section class="w-full py-7 rounded-t-2xl mb-8 shadow-lg bg-gradient-to-r from-purple-700 to-purple-500">
+        <h1 class="text-center text-4xl font-extrabold tracking-tight">
+          Add a New RISC-V Board
+        </h1>
+      </section>
+
+      <form action="{{ url_for('handle_add_board_post') }}" method="post" class="px-10 pt-0 pb-4">
+        {% if message %}
+        <div class="mb-6 p-4 rounded-lg {% if 'successfully' in message %}bg-green-100 text-green-700{% else %}bg-red-100 text-red-700{% endif %}">
+          {{ message }}
+        </div>
+        {% endif %}
+
+        <div class="mb-4 flex flex-col sm:flex-row items-center">
+          <label for="board_name" class="w-full sm:w-1/3 text-left sm:text-right pr-4 mb-2 sm:mb-0 text-slate-200 font-medium">Board Name:</label>
+          <div class="w-full sm:w-2/3">
+            <input type="text" id="board_name" name="board_name" class="form-control" placeholder="e.g., my-riscv-board-01" required />
+          </div>
+        </div>
+
+        <div class="mb-4 flex flex-col sm:flex-row items-center">
+          <label for="ip_address" class="w-full sm:w-1/3 text-left sm:text-right pr-4 mb-2 sm:mb-0 text-slate-200 font-medium">IP Address:</label>
+          <div class="w-full sm:w-2/3">
+            <input type="text" id="ip_address" name="ip_address" class="form-control" placeholder="e.g., 192.168.1.100" required />
+          </div>
+        </div>
+
+        <div class="mb-4 flex flex-col sm:flex-row items-center">
+          <label for="ssh_port" class="w-full sm:w-1/3 text-left sm:text-right pr-4 mb-2 sm:mb-0 text-slate-200 font-medium">SSH Port (Optional):</label>
+          <div class="w-full sm:w-2/3">
+            <input type="number" id="ssh_port" name="ssh_port" class="form-control" placeholder="e.g., 22" value="22" min="1" max="65535" />
+          </div>
+        </div>
+
+        <div class="mb-4 flex flex-col sm:flex-row items-center">
+          <label for="runner_type" class="w-full sm:w-1/3 text-left sm:text-right pr-4 mb-2 sm:mb-0 text-slate-200 font-medium">Runner Type:</label>
+          <div class="w-full sm:w-2/3">
+            <input type="text" id="runner_type" name="runner_type" class="form-control" placeholder="e.g., visionfive2, qemu" required />
+          </div>
+        </div>
+
+        <div class="mt-8 text-center space-x-4">
+          <button type="submit" class="inline-block px-8 py-3 bg-blue-600 text-white font-medium text-lg leading-tight uppercase rounded-lg shadow-md border-4 border-blue-700 hover:bg-blue-700 hover:shadow-lg hover:border-blue-800 transition duration-150 ease-in-out">
+            Add Board
+          </button>
+          <a href="{{ url_for('render_index_page') }}" class="inline-block px-8 py-3 bg-blue-600 text-white font-medium text-lg leading-tight uppercase rounded-lg shadow-md border-4 border-blue-700 hover:bg-blue-700 hover:shadow-lg hover:border-blue-800 transition duration-150 ease-in-out">
+            Back to Home
+          </a>
+        </div>
+      </form>
+
+      <div class="px-10 pb-10 mt-10 p-6 border-2 border-blue-800 rounded-xl bg-blue-900/30 text-blue-100 shadow-md">
+        <h3 class="mt-0 text-2xl font-semibold mb-3 text-center">
+          Setup Pre-requisites for the RISC-V Board:
+        </h3>
+        <ul class="list-disc list-inside space-y-2 text-lg">
+          <li>
+            For enhanced security, create a dedicated user on your RISC-V board
+            named <code class="font-mono bg-blue-800/50 text-blue-100 px-1 py-0.5 rounded shadow-inner">gitlab-runner-user</code>.
+            This user should <strong>not</strong> have <code class="font-mono bg-blue-800/50 text-blue-100 px-1 py-0.5 rounded shadow-inner">sudo</code>
+            (root) privileges. The GitLab Runner service and all its associated files will operate under this user.
+          </li>
+          <li>
+            The host computer running this setup (where this Flask application is hosted) must be able to access the RISC-V board via SSH using a
+            private key. Ensure this private key is configured for authentication with the
+            <code class="font-mono bg-blue-800/50 text-blue-100 px-1 py-0.5 rounded shadow-inner">gitlab-runner-user</code>
+            on the RISC-V board.
+          </li>
+        </ul>
+      </div>
+    </div>
+  </body>
+  
+  </html>

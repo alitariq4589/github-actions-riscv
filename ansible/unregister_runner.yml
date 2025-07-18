@@ -1,0 +1,26 @@
+- name: Unregister GitHub runner if container exists
+  hosts: "{{ target_node }}"
+  gather_facts: no
+  vars:
+    container_name: "{{ runner_name }}"
+
+  tasks:
+
+    - name: Check if container exists
+      shell: |
+        podman container exists {{ container_name }}
+      register: container_check
+      ignore_errors: true
+      changed_when: false
+
+    - name: Debug if container doesn't exist
+      debug:
+        msg: "Container '{{ container_name }}' does not exist."
+      when: container_check.rc != 0
+
+    - name: Unregister and remove the container
+      shell: |
+        echo "Stopping and removing container {{ container_name }}..."
+        podman stop {{ container_name }}
+        podman rm {{ container_name }}
+      when: container_check.rc == 0

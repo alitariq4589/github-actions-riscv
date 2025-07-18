@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Unregister GitLab Runner</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #0f172a;
+      color: #cbd5e1;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="bg-[#1e293b] rounded-3xl shadow-2xl max-w-2xl w-[95%] overflow-hidden">
+    <!-- Title section should touch top and align with sides -->
+    <section class="w-full py-7 px-10 shadow-lg bg-gradient-to-r from-red-700 to-red-500">
+      <h1 class="text-center text-4xl font-extrabold tracking-tight text-white">
+        Unregister a GitLab Runner
+      </h1>
+    </section>
+
+    <form action="{{ url_for('handle_unregister_runner_post') }}" method="post" class="px-10 pt-8 pb-4">
+      {% if message %}
+      <div
+        class="mb-6 p-4 rounded-lg {% if 'successfully' in message %}bg-green-100 text-green-700{% else %}bg-red-100 text-red-700{% endif %}">
+        {{ message }}
+      </div>
+      {% endif %}
+
+      <!-- Board Name -->
+      <div class="mb-4 flex flex-col sm:flex-row items-center">
+        <label for="node_name"
+          class="w-full sm:w-1/3 text-left sm:text-right pr-4 mb-2 sm:mb-0 text-slate-200 font-medium">Board
+          Name/ID:</label>
+        <div class="w-full sm:w-2/3">
+          <input type="text" id="node_name" name="node_name"
+            class="block w-full px-4 py-2 text-base text-gray-200 bg-[#334155] border border-gray-600 rounded-lg focus:outline-none focus:border-blue-500 placeholder-gray-400"
+            placeholder="e.g., my-riscv-board-01" required />
+        </div>
+      </div>
+
+      <!-- Runner ID -->
+      <div class="mb-4 flex flex-col sm:flex-row items-center">
+        <label for="runner_id"
+          class="w-full sm:w-1/3 text-left sm:text-right pr-4 mb-2 sm:mb-0 text-slate-200 font-medium">Runner
+          ID:</label>
+        <div class="w-full sm:w-2/3">
+          <input type="text" id="runner_id" name="runner_id"
+            class="block w-full px-4 py-2 text-base text-gray-200 bg-[#334155] border border-gray-600 rounded-lg focus:outline-none focus:border-blue-500 placeholder-gray-400"
+            placeholder="e.g., my-riscv-board-01-runner-1" required />
+        </div>
+      </div>
+
+      <!-- Buttons -->
+      <div class="mt-8 text-center space-x-4">
+        <button type="submit"
+          class="inline-block px-8 py-3 bg-blue-600 text-white font-medium text-lg leading-tight uppercase rounded-lg shadow-md border-4 border-blue-700 hover:bg-blue-700 hover:shadow-lg hover:border-blue-800 transition duration-150 ease-in-out">
+          Unregister Runner
+        </button>
+        <a href="{{ url_for('render_index_page') }}"
+          class="inline-block px-8 py-3 bg-blue-600 text-white font-medium text-lg leading-tight uppercase rounded-lg shadow-md border-4 border-blue-700 hover:bg-blue-700 hover:shadow-lg hover:border-blue-800 transition duration-150 ease-in-out">
+          Back to Home
+        </a>
+      </div>
+    </form>
+
+    <!-- Notes Section -->
+    <div class="px-10 pb-10 mt-10 p-6 border-2 border-blue-800 rounded-xl bg-blue-900/30 text-blue-100 shadow-md">
+      <h3 class="mt-0 text-2xl font-semibold mb-3 text-center">Unregistration Notes:</h3>
+      <ul class="list-disc list-inside space-y-2 text-lg">
+        <li>
+          Enter the exact <strong>Board Name/ID</strong> that the runner is associated with.
+        </li>
+        <li>
+          Enter the exact <strong>Runner ID</strong> (e.g.,
+          <code
+            class="font-mono bg-blue-800/50 text-blue-100 px-1 py-0.5 rounded shadow-inner">my-riscv-board-01-runner-1</code>)
+          that you wish to unregister.
+        </li>
+        <li>
+          This process will attempt to remove the GitLab Runner from the GitLab server and clean up its local installation
+          on the specified RISC-V board.
+        </li>
+        <li>
+          Ensure the host computer running this setup can still access the RISC-V board via SSH for the unregistration to
+          succeed.
+        </li>
+      </ul>
+    </div>
+  </div>
+</body>
+
+</html>
