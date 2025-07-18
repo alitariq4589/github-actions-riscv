@@ -607,7 +607,7 @@ def handle_runner_registration_post():
     github_server_url = request.form.get('github_server_url')
     target_platform = request.form.get('target_platform')
     user_email = request.form.get('user_email')
-    github_project_link = request.form.get('github_project_link')        
+    github_repo_link = request.form.get('github_repo_link')        
     
     if not all([runner_creation_token, github_server_url, target_platform, user_email, github_project_link]):
         logger.warning("Missing form fields in POST request.")
