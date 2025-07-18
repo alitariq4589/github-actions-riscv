@@ -285,7 +285,7 @@ def load_registry(registry_path):
     return registry
 
 
-def register_runner_attempt(target, github_server_url, runner_reg_token, log_file, inventory_file, runner_name, runner_registeration_playbook):
+def register_runner_attempt(target, runner_reg_token, log_file, inventory_file, runner_name, runner_registeration_playbook):
     """
     Runs the Ansible playbook to register the GitHub runner on the requested machine.
     Returns True if successful, False otherwise.
@@ -295,7 +295,6 @@ def register_runner_attempt(target, github_server_url, runner_reg_token, log_fil
         "-i", inventory_file,
         "-e", f"target_node={target}",
         "-e", f"registration_token={runner_reg_token}",
-        "-e", f"github_url={github_server_url}",
         "-e", f"runner_name={runner_name}"
     ]
     logger.info(f"Executing Ansible command for runner registration: {' '.join(cmd)}")
@@ -604,21 +603,14 @@ def handle_runner_registration_post():
     logger.info('Starting handle_runner_registration_post function')
     
     runner_creation_token = request.form.get('runner_token')
-    github_server_url = request.form.get('github_server_url')
     target_platform = request.form.get('target_platform')
     user_email = request.form.get('user_email')
     github_repo_link = request.form.get('github_repo_link')        
     
-    if not all([runner_creation_token, github_server_url, target_platform, user_email, github_project_link]):
+    if not all([runner_creation_token, target_platform, user_email, github_repo_link]):
         logger.warning("Missing form fields in POST request.")
         return render_template('no_registration_token.html',
-            error_message="It looks like you've landed here directly or submitted an incomplete form! To get started, please visit our registration page to provide the necessary details."
-        )
-    
-    if not check_github_server(github_server_url):
-        logger.warning(f"Invalid GitHub Server URL provided: {github_server_url}")
-        return render_template('no_registration_token.html',
-            error_message="The GitHub URL you entered appears to be invalid. Please check the URL and try again."
+            error_message="It looks like you've landed here directly or submitted an incomplete form! To get started, please visit the registration page to provide the necessary details."
         )
     
     runner_registry = load_registry(RUNNER_REGISTRY_FILE)
@@ -641,7 +633,7 @@ def handle_runner_registration_post():
     next_runner_id = f"{runner}-runner-{current_runner_count + 1}"
     
     registration_status = register_runner_attempt(
-        runner, github_server_url, runner_creation_token, LOG_FILE,
+        runner, runner_creation_token, LOG_FILE,
         INVENTORY_FILE, next_runner_id, RUNNER_REGISTRATION_PLAYBOOK
     )
     
@@ -649,9 +641,8 @@ def handle_runner_registration_post():
         runner_registry["nodes"][runner]["runners"].append({
             "id": next_runner_id,
             "token": runner_creation_token,
-            "url": github_server_url,
             "user_email": user_email,
-            "github_project_link": github_project_link,
+            "github_repo_link": github_repo_link,
             "registered_at": datetime.now(timezone.utc).isoformat()
         })
         
