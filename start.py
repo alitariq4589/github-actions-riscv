@@ -1,11 +1,12 @@
 #!/usr/bin/python3
 import os
+import sys
 import requests
 import subprocess
-import json
 import logging
 import re
 import yaml
+from urllib.parse import urlparse
 from datetime import datetime, timezone
 from flask import Flask, request, render_template, redirect, url_for
 
@@ -285,18 +286,24 @@ def load_registry(registry_path):
     return registry
 
 
-def register_runner_attempt(target, runner_reg_token, log_file, inventory_file, runner_name, runner_registeration_playbook):
+def register_runner_attempt(target, github_repo_url, runner_reg_token, log_file, inventory_file, runner_name, runner_registeration_playbook):
     """
     Runs the Ansible playbook to register the GitHub runner on the requested machine.
     Returns True if successful, False otherwise.
     """
+    
+    registered_at = datetime.now(timezone.utc).isoformat()
+    
     cmd = [
         "ansible-playbook", runner_registeration_playbook,
         "-i", inventory_file,
         "-e", f"target_node={target}",
         "-e", f"registration_token={runner_reg_token}",
-        "-e", f"runner_name={runner_name}"
+        "-e", f"github_repo_url={github_repo_url}",
+        "-e", f"runner_name={runner_name}",
+        "-e", f"created_at={registered_at}"
     ]
+    
     logger.info(f"Executing Ansible command for runner registration: {' '.join(cmd)}")
     try:
         with open(log_file, "a") as f:
@@ -439,6 +446,60 @@ def check_latest_failed_attempt(log_file):
     logger.info("No known registration errors found.")
     return 0
 
+
+# Currently getting core dumped illegal instruction error when using repo name as well as url if it makes a very long string
+
+def extract_owner_repo(repo_url):
+    """
+    Extracts owner and repo name from GitHub URL.
+    Example: https://github.com/owner/repo -> owner-repo
+    """
+    path = urlparse(repo_url).path.strip("/")
+    if len(path.split("/")) != 2:
+        raise ValueError("Invalid GitHub URL format.")
+    owner, repo = path.split("/")
+    return f"{owner}-{repo}"
+
+
+def register_runner_name(repo_url, compute_target_name):
+    try:
+        base_name = extract_owner_repo(repo_url)
+    except ValueError as e:
+        logger.info(f"Error: {e}")
+        sys.exit(1)
+
+    runner_name = f"{base_name}-{compute_target_name}"
+    return runner_name
+
+
+# Check if the repository is already registered with the same board type in YAML registry
+
+def is_project_already_registered(repo_url, compute_type, yaml_path):
+    """
+    Check if the given repo URL is already registered on any node of the given type.
+
+    :param repo_url: str - GitHub/GitLab repository URL
+    :param compute_type: str - The type (e.g. 'visionfive2', 'jupiter') to match against
+    :param yaml_path: str - Path to YAML registry
+    :return: bool - True if already registered in same type, False otherwise
+    """
+    if not os.path.exists(yaml_path):
+        raise FileNotFoundError(f"YAML registry not found: {yaml_path}")
+
+    with open(yaml_path, "r") as f:
+        data = yaml.safe_load(f) or {}
+
+    nodes = data.get("nodes", {})
+
+    for node_data in nodes.values():
+        if node_data.get("type") != compute_type:
+            continue
+        for runner in node_data.get("runners", []):
+            print(runner.get("github_repo_link"))
+            if runner.get("github_repo_link") == repo_url:
+                return True
+
+    return False
 
 # --- Flask Routes ---
 
@@ -607,6 +668,12 @@ def handle_runner_registration_post():
     user_email = request.form.get('user_email')
     github_repo_link = request.form.get('github_repo_link')        
     
+    if (is_project_already_registered(github_repo_link, target_platform, RUNNER_REGISTRY_FILE)):
+        logger.warning(f"Repository {github_repo_link} is already registered on a board of type {target_platform}.")
+        return render_template('no_registration_token.html',
+            error_message="This project is already registered on a board of the same type. Currently only one repository can be configured per board type. Please check the runner registry file for details."
+        )
+    
     if not all([runner_creation_token, target_platform, user_email, github_repo_link]):
         logger.warning("Missing form fields in POST request.")
         return render_template('no_registration_token.html',
@@ -626,14 +693,14 @@ def handle_runner_registration_post():
     if runner not in runner_registry["nodes"] or "runners" not in runner_registry["nodes"][runner]:
         logger.error(f"Registry structure error for runner: {runner}. 'runners' list not found.")
         return render_template('no_registration_token.html',
-            error_message="An internal configuration error occurred. Please contact Gage support."
+            error_message="An internal configuration error occurred. Please check the logs."
         )
     
     current_runner_count = len(runner_registry["nodes"][runner]["runners"])
-    next_runner_id = f"{runner}-runner-{current_runner_count + 1}"
+    next_runner_id =  next_id = register_runner_name(github_repo_link, target_platform)
     
     registration_status = register_runner_attempt(
-        runner, runner_creation_token, LOG_FILE,
+        runner, github_repo_link, runner_creation_token, LOG_FILE,
         INVENTORY_FILE, next_runner_id, RUNNER_REGISTRATION_PLAYBOOK
     )
     

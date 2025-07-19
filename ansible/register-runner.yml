@@ -12,8 +12,8 @@
           --label created_at="{{ created_at }}" \
           -e GITHUB_REPO="{{ github_repo_url }}" \
           -e RUNNER_TOKEN="{{ registration_token }}" \
-          --security-opt seccomp=unconfined  \ # This is currently required as otherwise we get illegal instruction errors from github actions package inside the container
-          github-actions
+          --security-opt seccomp=unconfined \
+          github-action
       register: result
       # Add a `changed_when` to prevent this task from always reporting a change if it just tries to register
       # You might want to make this more sophisticated if you have specific conditions for "changed"
