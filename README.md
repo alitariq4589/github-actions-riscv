@@ -1,9 +1,47 @@
-# GitHub Actions on RISC-V
+# Managing RISC-V compute machines as GitHub CI/CD runners
 
-This repository sets up github actions inside a podman container on a RISC-V machine. The setup is tested on Milk-V Pioneer Box.
+## What does this setup do
 
-It uses https://github.com/dkurt/github_actions_riscv as the GitHub actions for RISC-V *(for now)*.
+This infrastructure is for managing RISC-V boards as the GitHub runners. This setup works almost out of the box to:
 
-Running the [setup.sh](/setup.sh) on the RISC-V machine with sudo privileges will automatically build the github actions on the machine.
+- Set up the RISC-V boards with the infrastructure
+- Registering RISC-V board as CI/CD compute machines in the GitHub repositories
+- Unregistering the boards as runners
+- Removing the boards from this infrastructure
 
-Alternatively, if you are provisioning multiple RISC-V runners, you can also use [ansible playbook](/ansible/playbook.yaml) for consistency. For using the playbook, you will have to set up the board's IP and port inside the [inventory.ini](/ansible/inventory.ini) and change the `hosts` to the name of the board or the group of the boards which you would like to set up inside the [playbook.yaml](/ansible/playbook.yaml)
+
+![GitLab RISC-V Management Infrastructure](static/flask_app_github-riscv.drawio.png)
+
+## Getting Started
+
+### Pre-requisites
+
+- The RISC-V boards which are to be added to this infrastructure have to be accessible through SSH private key with `root` (for installing packages and installing gitlab runner as systemd service) user and a new user called `github-runner-user`
+- The `github-runner-user` should be added as a non-sudo user in the board
+- `python3` should be installed on the board as well as on the machine running this flow as a system-wide package
+- `pip` should be installed on the compute machine running this flow
+
+```
+sudo apt install python3 python3-pip
+```
+
+### Starting the webflow
+
+Web flow can be started by executing the following commands.
+
+```
+git clone https://github.com/alitariq4589/github-actions-riscv.git
+cd github-actions-riscv
+pip install -r requirements.txt
+./start.py
+```
+
+After running this command, the web UI can be accessible through web browser at `localhost:5000`.
+
+## Contributing
+
+We welcome any contribution to this flow. If you find any issues, feel free to create an issue.
+
+Need to add a new feature? Create a Pull request.
+
+Be sure to read the complete [documentation of this infrastructure](/docs/).
