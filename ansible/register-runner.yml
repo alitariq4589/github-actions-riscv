@@ -1,52 +1,60 @@
-- name: Register Gihub runner
+- name: Register Github runner
   hosts: "{{ target_node }}"
   gather_facts: no
   tasks:
-    - name: Register runner
-      shell: |
-        podman run -d \
-          --name "{{ runner_name }}" \
-          --restart=always \
-          --label role=github-runner \
-          --label runner_id="{{ runner_name }}" \
-          --label created_at="{{ created_at }}" \
-          -e GITHUB_REPO="{{ github_repo_url }}" \
-          -e RUNNER_TOKEN="{{ registration_token }}" \
-          --security-opt seccomp=unconfined \
-          github-action
-      register: result
-      # Add a `changed_when` to prevent this task from always reporting a change if it just tries to register
-      # You might want to make this more sophisticated if you have specific conditions for "changed"
-      changed_when: false # Set to false if you just want to check for success/failure in subsequent tasks
+    - block:
+       - name: Register runner
+         shell: |
+           podman run -d \
+             --name "{{ runner_name }}" \
+             --restart=always \
+             --label role=github-runner \
+             --label runner_id="{{ runner_name }}" \
+             --label created_at="{{ created_at }}" \
+             -e GITHUB_REPO="{{ github_repo_url }}" \
+             -e RUNNER_TOKEN="{{ registration_token }}" \
+             --security-opt seccomp=unconfined  \
+             github-action
+         register: result
+         # Add a `changed_when` to prevent this task from always reporting a change if it just tries to register
+         # You might want to make this more sophisticated if you have specific conditions for "changed"
+         changed_when: false # Set to false if you just want to check for success/failure in subsequent tasks
+   
+       - name: Inspect the container to check if it's still running
+         shell: |
+           podman inspect -f {% raw %}'{{.State.Status}}' {% endraw %} {{ runner_name }}
+         register: inspect_output
+         changed_when: false
+         failed_when: false
+   
+       - name: Wait for GitHub Runner to register or fail
+         shell: |
+           podman inspect -f '{{.State.Status}}' {{ runner_name }} | grep -q exited && exit 1
+       
+           logs=$(podman logs {{ runner_name }} 2>&1)
+           echo "$logs" | grep -q "Listening for Jobs" && exit 0
+           echo "$logs" | grep -q "Response status code does not indicate success" && exit 1
+           exit 2
+         register: check_runner_status
+         retries: 15
+         delay: 3
+         until: check_runner_status.rc != 2
+         failed_when: false
+         changed_when: false
+       
+       - name: Fail if container did not start properly
+         fail:
+           msg: "Container failed to start. Output: {{ result.stdout + result.stderr }}"
+         when:
+           - check_runner_status.rc != 0
+           - inspect_output.stdout.strip() != "running"
 
-    - name: Inspect the container to check if it's still running
-      shell: |
-        podman inspect -f {% raw %}'{{.State.Status}}' {% endraw %} {{ runner_name }}
-      register: inspect_output
-      changed_when: false
-      failed_when: inspect_output.stdout.strip() != "running"
-    
-    - name: Fail if container did not start properly
-      fail:
-        msg: "Container failed to start. Output: {{ result.stdout + result.stderr }}"
-      when:
-        - result.rc != 0
-        - result.stdout is not search("^[a-f0-9]{64}$")
+      rescue:
 
-    - name: Wait for GitHub Runner to register or fail
-      shell: |
-        logs=$(podman logs {{ runner_name }} 2>&1)
-        echo "$logs" | grep -q "Listening for Jobs" && exit 0
-        echo "$logs" | grep -q "Response status code does not indicate success" && exit 1
-        exit 2
-      register: check_runner_status
-      retries: 10
-      delay: 3
-      until: check_runner_status.rc != 2
-      failed_when: check_runner_status.rc == 1
-      changed_when: false
-
-    - name: Fail with message if runner registration failed
-      fail:
-        msg: "GitHub Runner failed to register. Check podman logs for container '{{ runner_name }}'."
-      when: check_runner_status.rc == 1
+      - name: Remove container after failure
+        shell: podman rm -f {{ runner_name }} || true
+        ignore_errors: true
+      
+      - name: Explicitly fail the play after cleanup
+        fail:
+          msg: "Playbook failed during runner setup. Cleanup complete."

@@ -29,7 +29,7 @@ ANSIBLE_UNREGISTER_RUNNER_LOG_FILE = os.path.join(APP_ROOT, "logs", "ansible-unr
 RUNNER_REGISTRATION_PLAYBOOK = os.path.join(APP_ROOT, "ansible", "register-runner.yml")
 SETUP_BOARD_PLAYBOOK = os.path.join(APP_ROOT, "ansible", "setup-board.yml") # Corrected filename
 UNREGISTER_BOARD_PLAYBOOK = os.path.join(APP_ROOT, "ansible", "unregister_board.yml") # Corrected filename
-UNREGISTER_GITLAB_RUNNER_PLAYBOOK = os.path.join(APP_ROOT, "ansible", "unregister_github_runner.yml") # New playbook path
+UNREGISTER_GITLAB_RUNNER_PLAYBOOK = os.path.join(APP_ROOT, "ansible", "unregister_runner.yml") # New playbook path
 
 # --- Utility Functions ---
 

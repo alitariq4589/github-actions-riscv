@@ -2,7 +2,7 @@
   hosts: "{{ target_node }}"
   gather_facts: no
   vars:
-    container_name: "{{ runner_name }}"
+    container_name: "{{ runner_id }}"
 
   tasks:
 
