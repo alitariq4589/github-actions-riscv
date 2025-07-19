@@ -38,6 +38,10 @@ pip install -r requirements.txt
 
 After running this command, the web UI can be accessible through web browser at `localhost:5000`.
 
+### How do the jobs run inside RISC-V boards
+
+If you want to understand how the GitHub CI builds will run inside the RISC-V boards, take a look at [this link](https://10x-engineers.github.io/riscv-ci-partners/setting_up_github_runner/#:~:text=Cloud%E2%80%91V.-,How%20the%20GitHub%20Action%20workflow%20works,-The%20flow%20uses) explaining how this infrastructure sets up podman inside the RISC-V board.
+
 ## Contributing
 
 We welcome any contribution to this flow. If you find any issues, feel free to create an issue.
