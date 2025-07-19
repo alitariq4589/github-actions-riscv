@@ -405,13 +405,12 @@ def save_registry(registry, runner_registry_file_path):
 def check_latest_failed_attempt(log_file):
     """
     Parses the Ansible log to identify the most recent failing task related to
-    GitHub Runner registration.
+    GitLab Runner registration.
 
     Returns:
-        0: No error or unrecognized failure
-        1: Invalid GitHub Registration Token (verification failed)
-        2: Invalid Token or GitHub server URL (422 Unprocessable Entity)
-        3: GitHub Runner binary not found
+        1: Container could not start properly
+        2: Invalid GitHub Registration Token or Github repo url
+        3: There is already a podman container running with the same name
         4: Generic error (fatal but not matched above)
     """
     if not os.path.exists(log_file):
@@ -425,26 +424,15 @@ def check_latest_failed_attempt(log_file):
     for i in range(len(lines)-1, -1, -1):
         line = lines[i]
 
-        if "TASK [Fail if runner verification failed]" in line:
-            logger.info("Detected latest failure: Invalid GitHub Registration Token.")
+        if "TASK [Inspect the container to check if it's still running]" in line:
+            logger.info("Internal Error: Container did not start properly.")
             return 1
-        if "TASK [Fail if request cannot be processed]" in line:
-            logger.info("Detected latest failure: Unprocessable Entity (422).")
+        if "TASK [Fail if container did not start properly]" in line:
+            logger.info("Either the token is invalid or the GitHub server URL is incorrect.")
             return 2
-        if "TASK [Fail if runner registration was not successful]" in line:
-            logger.info("Detected latest failure: Unknown registration failure.")
+        else:
+            logger.info("Unknown error occurred during registration.")
             return 4
-        if "TASK [Catch-all failure if command failed" in line:
-            # Look forward for more details like "not found"
-            for j in range(i, min(i+10, len(lines))):
-                if "not found" in lines[j] and "github-runner-linux-riscv64" in lines[j]:
-                    logger.info("Detected latest failure: GitHub Runner binary not found.")
-                    return 3
-            logger.info("Detected catch-all failure: Unrecognized error.")
-            return 4
-
-    logger.info("No known registration errors found.")
-    return 0
 
 
 # Currently getting core dumped illegal instruction error when using repo name as well as url if it makes a very long string
@@ -728,23 +716,14 @@ def handle_runner_registration_post():
         fail_code = check_latest_failed_attempt(LOG_FILE)
         if fail_code == 1:
             return render_template('no_registration_token.html',
-                error_message="The GitHub registration token you entered has either expired or is invalid. Kindly check the token again or generate a new token by creating another GitHub runner."
+                error_message="The setup is currently unable to register your GitHub Actions runner on specified machine. Please check the logs for details, and create an issue if necessary."
             )
         elif fail_code == 2:
             return render_template('no_registration_token.html',
-                error_message="Your GitHub token is invalid or expired, or the server URL is incorrect. Please verify these details or generate a new token."
-            )
-        elif fail_code == 3:
-            return render_template('no_registration_token.html',
-                error_message="The GitHub Runner package was not found on the selected machine and could not be installed automatically. Please try again or contact support."
-            )
-        elif fail_code == 4:
-            return render_template('no_registration_token.html',
-                error_message="An unexpected error occurred during board setup. Please check the application logs for more details or contact support."
-            )
-        
+                error_message="Your GitHub runner token is invalid or expired, or the GitHub repository URL is incorrect. Please verify these details or generate a new token."
+            )        
         return render_template('no_registration_token.html',
-            error_message="We encountered an internal issue and were unable to assign the requested machine. Please try again shortly, or check if you entered the correct GitHub registration token and server URL."
+            error_message="The setup has encountered an internal issue and was unable to assign the requested machine. Please check your runner registration token and GitHub repository URL and try again shortly. If the error persists, check the logs and create an issue."
         )
 
 # Add new route for board status
