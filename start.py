@@ -905,6 +905,7 @@ if __name__ == '__main__':
     os.makedirs(os.path.join(APP_ROOT, "ansible"), exist_ok=True)
     os.makedirs(os.path.join(APP_ROOT, "static"), exist_ok=True)
     os.makedirs(os.path.join(APP_ROOT, "templates"), exist_ok=True)
+    os.makedirs(os.path.join(APP_ROOT, "logs"), exist_ok=True)
 
     # Initialize the registry file if it doesn't exist to ensure initial structure
     load_registry(RUNNER_REGISTRY_FILE)
