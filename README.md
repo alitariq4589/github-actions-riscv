@@ -1,5 +1,8 @@
 # Managing RISC-V compute machines as GitHub CI/CD runners
 
+_Despite its name, this repository contains infrastructure configuration for managing a fleet of RISC-V compute machines as GitHub Actions runners. For the actual binary used to run self-hosted GitHub Actions on RISC-V machines, please refer to the [github-runner-riscv](https://github.com/alitariq4589/github-runner-riscv) repository and its releases. Note that the GitHub Actions runner package allows only one runner instance per source code copy. To run multiple GitHub Actions runners on the same machine (for multiple repositories), please see the [github-actions-riscv-image](https://github.com/alitariq4589/github-actions-riscv-image?tab=readme-ov-file) repository and its releases, which provides Docker/Podman images for this purpose._
+
+
 ## What does this setup do
 
 This infrastructure is for managing RISC-V boards as the GitHub runners. This setup works almost out of the box to:
