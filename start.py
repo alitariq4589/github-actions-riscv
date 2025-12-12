@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 APP_ROOT = os.path.dirname(os.path.abspath(__file__))
 RUNNER_REGISTRY_FILE = os.path.join(APP_ROOT, "runner_registry.yaml")
 INVENTORY_FILE = os.path.join(APP_ROOT, "ansible", "inventory.ini")
-LOG_FILE = os.path.join(APP_ROOT,"logs", "ansible-registration.log")
+LOG_FILE = os.path.join(APP_ROOT, "logs", "ansible-registration.log")
 ANSIBLE_SETUP_LOG_FILE = os.path.join(APP_ROOT, "logs", "ansible-setup.log")
 ANSIBLE_UNREGISTER_BOARD_LOG_FILE = os.path.join(APP_ROOT, "logs", "ansible-unregister-board.log") # Renamed for clarity
 ANSIBLE_UNREGISTER_RUNNER_LOG_FILE = os.path.join(APP_ROOT, "logs", "ansible-unregister-runner.log") # New log file for unregistering runner
@@ -32,6 +32,29 @@ UNREGISTER_BOARD_PLAYBOOK = os.path.join(APP_ROOT, "ansible", "unregister_board.
 UNREGISTER_GITLAB_RUNNER_PLAYBOOK = os.path.join(APP_ROOT, "ansible", "unregister_runner.yml") # New playbook path
 
 # --- Utility Functions ---
+def run_ansible_with_logging(cmd, log_file, operation_name="Ansible operation"):
+    """
+    Runs an Ansible command with proper error handling
+    Returns (success, returncode) tuple.
+    """
+    logger.info(f"Executing command for {operation_name}: {' '.join(cmd)}")
+    try:
+        with open(log_file, "a") as f:
+            f.write(f"\n--- {operation_name} Started: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} ---\n")
+    except FileNotFoundError as e:
+        logger.error(f"Error: Could not write to log file. Check if the directory exists and is writeable: {log_file}")
+        logger.error(f"Details: {e}")
+        return (False, -1)
+
+    try:
+        with open(log_file, "a") as f:
+            process = subprocess.run(cmd, stdout=f, stderr=subprocess.STDOUT, check=False)
+        logger.info(f"{operation_name} return code: {process.returncode}")
+        return (process.returncode == 0, process.returncode)
+    except FileNotFoundError as e:
+        logger.error("Error: 'ansible-playbook' command not found. Is Ansible installed and in your PATH?")
+        logger.error(f"Details: {e}")
+        return (False, -1)
 
 def check_github_server(url):
     """
@@ -303,20 +326,9 @@ def register_runner_attempt(target, github_repo_url, runner_reg_token, log_file,
         "-e", f"runner_name={runner_name}",
         "-e", f"created_at={registered_at}"
     ]
-    
-    logger.info(f"Executing Ansible command for runner registration: {' '.join(cmd)}")
-    try:
-        with open(log_file, "a") as f:
-            f.write(f"\n--- Runner Registration Attempt Started: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} ---\n")
-            process = subprocess.run(cmd, stdout=f, stderr=subprocess.STDOUT, check=False)
-        logger.info(f"Ansible registration playbook return code: {process.returncode}")
-        return process.returncode == 0
-    except FileNotFoundError:
-        logger.error("Error: 'ansible-playbook' command not found. Is Ansible installed and in your PATH?")
-        return False
-    except Exception as e:
-        logger.error(f"Error running Ansible playbook for runner registration: {e}")
-        return False
+
+    success, _ = run_ansible_with_logging(cmd, log_file, "runner registration")
+    return success
 
 def setup_board_attempt(target_node, log_file, inventory_file, setup_playbook):
     """
@@ -329,19 +341,9 @@ def setup_board_attempt(target_node, log_file, inventory_file, setup_playbook):
         "-e", f"target_node={target_node}", # Pass the target node dynamically
         "--extra-vars", f"ansible_user=root" # Ensure ansible_user is passed for setup
     ]
-    logger.info(f"Executing Ansible command for board setup: {' '.join(cmd)}")
-    try:
-        with open(log_file, "a") as f: # Use the dedicated setup log file
-            f.write(f"\n--- Board Setup Attempt Started: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} ---\n")
-            process = subprocess.run(cmd, stdout=f, stderr=subprocess.STDOUT, check=False)
-        logger.info(f"Ansible board setup playbook return code: {process.returncode}")
-        return process.returncode == 0
-    except FileNotFoundError:
-        logger.error("Error: 'ansible-playbook' command not found. Is Ansible installed and in your PATH?")
-        return False
-    except Exception as e:
-        logger.error(f"Error running Ansible playbook for board setup: {e}")
-        return False
+
+    success, _ = run_ansible_with_logging(cmd, log_file, "board setup")
+    return success
 
 def unregister_board_attempt(target_node, log_file, inventory_file, unregister_playbook):
     """
@@ -354,19 +356,9 @@ def unregister_board_attempt(target_node, log_file, inventory_file, unregister_p
         "-e", f"target_node={target_node}",
         "--extra-vars", f"ansible_user=root" # Ensure ansible_user is passed for cleanup
     ]
-    logger.info(f"Executing Ansible command for board unregistration: {' '.join(cmd)}")
-    try:
-        with open(log_file, "a") as f: # Use the dedicated unregister log file
-            f.write(f"\n--- Board Unregistration Attempt Started: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} ---\n")
-            process = subprocess.run(cmd, stdout=f, stderr=subprocess.STDOUT, check=False)
-        logger.info(f"Ansible board unregistration playbook return code: {process.returncode}")
-        return process.returncode == 0
-    except FileNotFoundError:
-        logger.error("Error: 'ansible-playbook' command not found. Is Ansible installed and in your PATH?")
-        return False
-    except Exception as e:
-        logger.error(f"Error running Ansible playbook for board unregistration: {e}")
-        return False
+
+    success, _ = run_ansible_with_logging(cmd, log_file, "board unregistration")
+    return success
 
 def unregister_github_runner_attempt(target_node, runner_id, log_file, inventory_file, unregister_runner_playbook):
     """
@@ -380,19 +372,9 @@ def unregister_github_runner_attempt(target_node, runner_id, log_file, inventory
         "-e", f"runner_id={runner_id}",
         "--extra-vars", f"ansible_user=github-runner-user"
     ]
-    logger.info(f"Executing Ansible command for GitHub runner unregistration: {' '.join(cmd)}")
-    try:
-        with open(log_file, "a") as f:
-            f.write(f"\n--- GitHub Runner Unregistration Attempt Started: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} ---\n")
-            process = subprocess.run(cmd, stdout=f, stderr=subprocess.STDOUT, check=False)
-        logger.info(f"Ansible GitHub runner unregistration playbook return code: {process.returncode}")
-        return process.returncode == 0
-    except FileNotFoundError:
-        logger.error("Error: 'ansible-playbook' command not found. Is Ansible installed and in your PATH?")
-        return False
-    except Exception as e:
-        logger.error(f"Error running Ansible playbook for GitHub runner unregistration: {e}")
-        return False
+
+    success, _ = run_ansible_with_logging(cmd, log_file, "GitHub runner unregistration")
+    return success
 
 
 def save_registry(registry, runner_registry_file_path):
