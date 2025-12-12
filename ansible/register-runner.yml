@@ -29,7 +29,7 @@
    
        - name: Wait for GitHub Runner to register or fail
          shell: |
-           podman inspect -f '{{.State.Status}}' {{ runner_name }} | grep -q exited && exit 1
+           podman inspect -f {% raw %}'{{.State.Status}}' {% endraw %} {{ runner_name }} | grep -q exited && exit 1
        
            logs=$(podman logs {{ runner_name }} 2>&1)
            echo "$logs" | grep -q "Listening for Jobs" && exit 0
